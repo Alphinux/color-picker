@@ -2,16 +2,32 @@
 import { ref } from 'vue'
 
 const hue = ref(0)
+
+const x = ref(0)
+const y = ref(0)
+
+function updateCursorLocation(e) {
+    const element = document.getElementById('colorPickerMain')
+    var rect = element.getBoundingClientRect(); 
+    x.value = e.clientX - rect.left; 
+    y.value = e.clientY - rect.top; 
+
+    console.log('Cursor position: ' + x.value + ',' + y.value); 
+}
+function trackCursor(value) {
+    if (value) {
+        window.addEventListener('mousemove', updateCursorLocation)
+    } else {
+        window.removeEventListener('mousemove', updateCursorLocation)
+    }
+}
 </script>
 <template>
-    <div id="colorPickerHero">
-        <div id="colorPickerMain">
-            <div id="saturation">
-                <div id="saturation-blend"></div>
-            </div>
-            <div id="value">
-                <div id="value-blend"></div>
-            </div>
+    <div id="colorPickerHero" @mouseup="() => trackCursor(false)">
+        <div id="colorPickerMain" @mousedown="() => trackCursor(true)" @mouseup="() => trackCursor(false)">
+            <div id="selector"></div>
+            <div id="saturation"></div>
+            <div id="value"></div>
         </div>
         <div id="hueSlider">
             <input type="range" min="1" max="360" step="1" class="slider" id="hueSliderRange" v-model="hue">
@@ -34,19 +50,15 @@ const hue = ref(0)
 }
 #saturation {
     position: absolute;
-    opacity: 0;
     height: 100%;
     width: 100%;
-    mask-image: linear-gradient(45deg, rgba(0, 0, 0, 1), transparent);
     background-image: linear-gradient(270deg, hsla(v-bind('hue'), 100%, 50%, 1),hsla(0, 0%, 0%, 0));
 }
 #value {
     position: relative;
-    opacity: 0;
     height: 100%;
     width: 100%;
-    mask-image: linear-gradient(180deg, transparent, rgba(0, 0, 0, 1));
-    background-image: linear-gradient(0deg, hsla(v-bind('hue'), 0%, 0%, 1), hsla(v-bind('hue'), 100%, 50%, 1));
+    background-image: linear-gradient(0deg, hsla(v-bind('hue'), 0%, 0%, 1), hsla(v-bind('hue'), 100%, 50%, 0));
 }
 #hueSlider {
     margin-top: 15px;
