@@ -2,15 +2,13 @@
 import ColorPicker from './components/colorPicker.vue'
 import { reactive } from 'vue'
 
-const color = reactive({
-  r: 0,
-  g: 0,
-  b: 0
-})
+function updateMainColor(r, g, b) {
+  console.log(r, g, b)
+}
 </script>
 
 <template>
-  <ColorPicker :color="color" />
+  <ColorPicker :updateMainColor="updateMainColor" />
 </template>
 
 <style scoped>

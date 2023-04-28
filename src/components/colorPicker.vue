@@ -1,5 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, defineProps } from 'vue'
+
+const props = defineProps(['updateMainColor'])
 
 const hue = ref(0)
 
@@ -13,10 +15,14 @@ const outB = ref('0')
 function updateCursorLocation(e) {
     const element = document.getElementById('colorPickerMain')
     var rect = element.getBoundingClientRect(); 
-    x.value = `${(e.clientX - rect.left)>=218.4 ? 213.4 : (e.clientX - rect.left)<=0 ? -5 : e.clientX - rect.left - 5}px`; 
-    y.value = `${(e.clientY - rect.top)>=122.85 ? 118.4 : (e.clientY - rect.top)<=0 ? -5 : e.clientY - rect.top - 5}px`;
+    let calculatedX = (e.clientX - rect.left)>=218.4 ? 213.4 : (e.clientX - rect.left)<=0 ? -5 : e.clientX - rect.left - 5
+    let calculatedY = (e.clientY - rect.top)>=122.85 ? 118.4 : (e.clientY - rect.top)<=0 ? -5 : e.clientY - rect.top - 5
+    if ((e.clientX - rect.left) < -15 || (e.clientX - rect.left) > 230 || (e.clientY - rect.top) < -15 ||(e.clientY - rect.top) > 135) {
+        window.removeEventListener('mousemove', updateCursorLocation)
+    }
+    x.value = `${Math.round(calculatedX)}px`; 
+    y.value = `${Math.round(calculatedY)}px`;
     calculateOutput(x.value, y.value);
-    // console.log('Cursor position: ' + x.value + ',' + y.value); 
 }
 function trackCursor(value) {
     if (value) {
@@ -33,7 +39,6 @@ watch(hue, async (newHue, oldHue) => {
 function calculateOutput(first, second) {
     let value = 1 - ((parseInt(second.slice(0, -2)) + 5) / 122.85);
     let saturation = (parseInt(first.slice(0, -2)) + 5) / 218.4;
-    console.log(value, saturation)
     convertHSVtoRGB(hue.value / 360, saturation, value)
 }
 
@@ -58,7 +63,7 @@ function convertHSVtoRGB(h, s, v) {
     outR.value = Math.round(r * 255)
     outG.value = Math.round(g * 255)
     outB.value = Math.round(b * 255)
-    console.log(outR.value, outG.value, outB.value)
+    props.updateMainColor(outR.value, outG.value, outB.value)
 }
 </script>
 <template>
@@ -92,11 +97,12 @@ function convertHSVtoRGB(h, s, v) {
     height: 10px;
     width: 10px;
     border-radius: 50px;
-    color: white;
-    border: 1px solid grey;
+    border: 2px solid white;
+    background-color: black;
     position: absolute;
     top: v-bind('y');
     left: v-bind('x');
+    z-index: 100;
 }
 #saturation {
     position: absolute;
@@ -133,6 +139,7 @@ function convertHSVtoRGB(h, s, v) {
     -webkit-appearance: none;
 }
 #output {
+    margin-top: 15px;
     background-color: rgba(v-bind('outR'), v-bind('outG'), v-bind('outB'), 1);
     height: 25px;
     width: 100%;
