@@ -1,14 +1,14 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, watch } from 'vue'
 
 const hue = ref(0)
 
 const x = ref('0px')
 const y = ref('0px')
 
-const r = ref('0')
-const g = ref('0')
-const b = ref('0')
+const outR = ref('0')
+const outG = ref('0')
+const outB = ref('0')
 
 function updateCursorLocation(e) {
     const element = document.getElementById('colorPickerMain')
@@ -16,7 +16,7 @@ function updateCursorLocation(e) {
     x.value = `${(e.clientX - rect.left)>=218.4 ? 213.4 : (e.clientX - rect.left)<=0 ? -5 : e.clientX - rect.left - 5}px`; 
     y.value = `${(e.clientY - rect.top)>=122.85 ? 118.4 : (e.clientY - rect.top)<=0 ? -5 : e.clientY - rect.top - 5}px`;
     calculateOutput(x.value, y.value);
-    console.log('Cursor position: ' + x.value + ',' + y.value); 
+    // console.log('Cursor position: ' + x.value + ',' + y.value); 
 }
 function trackCursor(value) {
     if (value) {
@@ -26,44 +26,39 @@ function trackCursor(value) {
     }
 }
 
+watch(hue, async (newHue, oldHue) => {
+    calculateOutput(x.value, y.value)
+})
+
 function calculateOutput(first, second) {
-    first.slice(0, -1); 
-    second.slice(0, -1); 
-    let value = (parseInt(first) + 5) / 218.4;
-    let saturation = (parseInt(second) + 5) / 122.85;
-    convertHSVtoRGB(hue.value, saturation, value)
+    let value = 1 - ((parseInt(second.slice(0, -2)) + 5) / 122.85);
+    let saturation = (parseInt(first.slice(0, -2)) + 5) / 218.4;
+    console.log(value, saturation)
+    convertHSVtoRGB(hue.value / 360, saturation, value)
 }
 
 function convertHSVtoRGB(h, s, v) {
-    if (arguments.length == 1) {
-        var { h, s, v } = arguments[0];
+    var r, g, b, i, f, p, q, t;
+    if (arguments.length === 1) {
+        s = h.s, v = h.v, h = h.h;
     }
-
-    var H = h;
-    var S = s;
-    var V = v;
-
-    if (H == 360) {
-        H = 0;
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
     }
-
-    const C = S * V;
-    const X = C * (1 - Math.abs((H / 60) % 2 - 1));
-    const m = V - C;
-
-    let temp = [];
-
-    if (0 <= H && H < 60) { temp = [C, X, 0]; }
-    else if (60 <= H && H < 120) { temp = [X, C, 0]; }
-    else if (120 <= H && H < 180) { temp = [0, C, X]; }
-    else if (180 <= H && H < 240) { temp = [0, X, C]; }
-    else if (240 <= H && H < 300) { temp = [X, 0, C]; }
-    else if (300 <= H && H < 360) { temp = [C, 0, X]; }
-
-    r.value = Math.round((temp[0] + m) * 255)
-    g.value = Math.round((temp[1] + m) * 255)
-    b.value = Math.round((temp[2] + m) * 255)
-    console.log(Math.round((temp[0] + m) * 255), g.value, b.value)
+    outR.value = Math.round(r * 255)
+    outG.value = Math.round(g * 255)
+    outB.value = Math.round(b * 255)
+    console.log(outR.value, outG.value, outB.value)
 }
 </script>
 <template>
@@ -138,7 +133,7 @@ function convertHSVtoRGB(h, s, v) {
     -webkit-appearance: none;
 }
 #output {
-    color: rgba(v-bind('r'), v-bind('g'), v-bind('b'), 1);
+    background-color: rgba(v-bind('outR'), v-bind('outG'), v-bind('outB'), 1);
     height: 25px;
     width: 100%;
 }
